@@ -235,8 +235,12 @@ section_postgres() {
   pkg_install postgresql
 
   local pgconf pghba
-  pgconf=$(find /etc/postgresql -maxdepth 2 -name postgresql.conf | head -n1)
-  pghba=$(find /etc/postgresql -maxdepth 2 -name pg_hba.conf | head -n1)
+  pgconf=$(find /etc/postgresql -maxdepth 3 -name postgresql.conf | head -n1)
+  pghba=$(find /etc/postgresql -maxdepth 3 -name pg_hba.conf | head -n1)
+  if [ -z "$pgconf" ] || [ -z "$pghba" ]; then
+    echo "Could not locate postgresql.conf/pg_hba.conf under /etc/postgresql — is postgresql actually installed?" >&2
+    exit 1
+  fi
 
   sed -i "s/^#\?listen_addresses.*/listen_addresses = 'localhost'/" "$pgconf"
   line_in_file "$pghba" "host watchlist n8n 127.0.0.1/32 scram-sha-256"
