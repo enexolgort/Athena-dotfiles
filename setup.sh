@@ -57,7 +57,8 @@ mkdir_state() { mkdir -p "$STATE_DIR"; }
 # Use this to skip re-doing expensive/disruptive work (like recreating a
 # container) when nothing about its desired config actually changed.
 changed_since() {
-  local key="$1" content="$2" file="$STATE_DIR/$key.hash" newhash
+  local key="$1" content="$2" newhash
+  local file="$STATE_DIR/$key.hash"
   newhash=$(echo -n "$content" | sha256sum | cut -d' ' -f1)
   mkdir_state
   if [ -f "$file" ] && [ "$(cat "$file")" = "$newhash" ]; then
