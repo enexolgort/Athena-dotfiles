@@ -27,11 +27,7 @@ Each section in `setup.sh` is idempotent:
 
 ## First boot
 1. **Passwords are prompted for interactively**, not hardcoded — the first time `setup.sh` creates `deploy`, `enexolgort`, the Postgres `n8n` role, or the Forgejo admin account, it'll stop and ask you to type + confirm a password for that one, then move on. It only asks once per thing (re-running `setup.sh` later won't re-prompt for something that already exists), so don't lose those passwords — nothing else stores them.
-2. **Join your tailnet, matching the machine's hostname:**
-   ```bash
-   sudo tailscale up --hostname=athena
-   ```
-   (Tailscale's MagicDNS lowercases device names regardless of the OS hostname's case, hence `athena` here even though the hostname is set to `Athena`.) Note **no `--ssh` flag** — Tailscale SSH bypasses `sshd_config` entirely (including `PermitRootLogin`), so it's deliberately left off; `setup.sh`'s tailscale section also explicitly runs `tailscale set --ssh=false` in case it was ever turned on manually.
+2. **Joining your tailnet is automatic** (`section_tailscale`) — if the box isn't already joined, `setup.sh` itself runs `tailscale up --hostname=athena` and prints an approval URL; open that in a browser to approve the device. (Tailscale's MagicDNS lowercases device names regardless of the OS hostname's case, hence `athena` even though the hostname is set to `Athena`.) For a fully unattended run (e.g. reprovisioning), set `TAILSCALE_AUTHKEY` in the environment before running `setup.sh` — generate one from the Tailscale admin console (Settings → Keys) — and it'll join silently with no browser step. Note **no `--ssh` flag** is ever passed: Tailscale SSH bypasses `sshd_config` entirely (including `PermitRootLogin`), so it's deliberately left off; the tailscale section also explicitly runs `tailscale set --ssh=false` in case it was ever turned on manually. Re-running `setup.sh` after already being joined just no-ops this step.
 3. **Change your login password**: `passwd deploy` and `passwd enexolgort`
 4. Both `deploy` and `enexolgort` are regular (non-root) users in the `sudo` group — full `sudo` access, no direct root login. **Root login over SSH is disabled** (`PermitRootLogin no`, set in `/etc/ssh/sshd_config.d/99-local.conf`); always log in as one of these two and `sudo` from there.
 

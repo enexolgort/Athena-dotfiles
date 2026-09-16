@@ -181,11 +181,22 @@ section_tailscale() {
     curl -fsSL https://tailscale.com/install.sh | sh
   fi
   enable_now tailscaled
-  # --ssh deliberately NOT passed: Tailscale SSH bypasses sshd_config
-  # entirely (including PermitRootLogin above), so it's kept off and
-  # explicitly disabled below in case it was ever turned on manually.
+
+  if [ "$(tailscale status --json 2>/dev/null | jq -r .BackendState)" = "Running" ]; then
+    log "Already joined to the tailnet"
+  elif [ -n "${TAILSCALE_AUTHKEY:-}" ]; then
+    log "Joining tailnet as '$HOSTNAME_NEW' (via TAILSCALE_AUTHKEY)"
+    tailscale up --hostname="$HOSTNAME_NEW" --authkey="$TAILSCALE_AUTHKEY"
+  else
+    log "Joining tailnet as '$HOSTNAME_NEW' — open the URL below in a browser to approve this device"
+    tailscale up --hostname="$HOSTNAME_NEW"
+  fi
+
+  # --ssh deliberately NOT passed to `tailscale up` above: Tailscale SSH
+  # bypasses sshd_config entirely (including PermitRootLogin above), so
+  # it's kept off and explicitly disabled here in case it was ever
+  # turned on manually.
   tailscale set --ssh=false || true
-  echo "Run manually if not already joined: sudo tailscale up --hostname=$HOSTNAME_NEW"
 }
 
 section_firewall() {
