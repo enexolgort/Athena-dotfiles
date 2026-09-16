@@ -293,7 +293,24 @@ section_forgejo() {
     chmod +x "$bin"
   fi
 
+  mkdir -p "$FORGEJO_DATA_DIR/data"
+  chown -R "$FORGEJO_USER:$FORGEJO_USER" "$FORGEJO_DATA_DIR"
+
+  # DB_TYPE + INSTALL_LOCK are the two keys that matter here: without
+  # them Forgejo skips straight to its own interactive web installer on
+  # first request (defaulting to MySQL at 127.0.1.1:3306, which doesn't
+  # exist - "dial tcp 127.0.1.1:3306: connect: connection refused" is
+  # exactly that installer failing, not a real Postgres/MySQL problem).
+  # SQLite is a single file, no separate DB service needed - same
+  # tradeoff the NixOS Forgejo module made by default.
   cat > /etc/forgejo/app.ini <<EOF
+[database]
+DB_TYPE = sqlite3
+PATH = ${FORGEJO_DATA_DIR}/data/forgejo.db
+
+[security]
+INSTALL_LOCK = true
+
 [server]
 HTTP_ADDR = 0.0.0.0
 HTTP_PORT = 3000
@@ -321,7 +338,8 @@ Restart=always
 WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
-  enable_now forgejo
+  systemctl enable forgejo >/dev/null
+  systemctl restart forgejo  # not enable_now: must restart (not just start) to pick up app.ini changes on re-runs
 
   sleep 3
   if ! sudo -u "$FORGEJO_USER" "$bin" admin user list --config /etc/forgejo/app.ini 2>/dev/null \
