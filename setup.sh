@@ -27,13 +27,11 @@ FORGEJO_VERSION="10.0.3"  # check https://codeberg.org/forgejo/forgejo/releases/
 FORGEJO_DATA_DIR="/var/lib/forgejo"
 FORGEJO_USER="forgejo"
 FORGEJO_ADMIN_USER="enexolgort"
-FORGEJO_ADMIN_PASSWORD="changeme-git"       # CHANGE on first login
 FORGEJO_ADMIN_EMAIL="enexolgort@athena.local"
 
 OLLAMA_MODEL="qwen2.5:7b"
 
 N8N_DATA_DIR="/var/lib/n8n"
-POSTGRES_N8N_PASSWORD="changeme-db"          # CHANGE on first login
 
 BACKUP_DIR="/var/backups/athena"
 BACKUP_RETENTION_DAYS=14
@@ -69,6 +67,26 @@ changed_since() {
   return 0
 }
 
+prompt_password() {
+  # prompt_password <description> <outvar> — interactive, hidden input,
+  # confirmed twice. Only called at actual creation time (see call
+  # sites below), never on a no-op re-run, so it doesn't nag you for a
+  # password on every `./setup.sh`.
+  local desc="$1" __outvar="$2" p1 p2
+  while true; do
+    read -r -s -p "Set a password for $desc: " p1; echo >&2
+    read -r -s -p "Confirm: " p2; echo >&2
+    if [ -z "$p1" ]; then
+      echo "Password can't be empty." >&2
+    elif [ "$p1" != "$p2" ]; then
+      echo "Passwords didn't match — try again." >&2
+    else
+      break
+    fi
+  done
+  printf -v "$__outvar" '%s' "$p1"
+}
+
 pkg_install() {
   local missing=()
   for p in "$@"; do
@@ -81,12 +99,13 @@ pkg_install() {
 }
 
 user_ensure() {
-  # user_ensure <name> <groups-csv> <default-password>
-  local name="$1" groups="$2" pass="$3"
+  # user_ensure <name> <groups-csv>
+  local name="$1" groups="$2" pass
   if ! id "$name" >/dev/null 2>&1; then
+    prompt_password "the new '$name' user" pass
     useradd -m -s /bin/bash -G "$groups" "$name"
     echo "$name:$pass" | chpasswd
-    log "Created user $name (default password: $pass — CHANGE with 'passwd $name')"
+    log "Created user $name"
   else
     usermod -G "$groups" "$name"
   fi
@@ -143,8 +162,8 @@ section_hostname() {
 
 section_users() {
   log "Users"
-  user_ensure "$DEPLOY_USER" "sudo,docker" "changeme"
-  user_ensure "$ENEXOLGORT_USER" "sudo" "changeme"
+  user_ensure "$DEPLOY_USER" "sudo,docker"
+  user_ensure "$ENEXOLGORT_USER" "sudo"
 }
 
 section_ssh() {
@@ -224,9 +243,11 @@ section_postgres() {
 
   systemctl restart postgresql
 
-  sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='n8n'" | grep -q 1 || \
-    sudo -u postgres psql -c "CREATE ROLE n8n WITH LOGIN PASSWORD '$POSTGRES_N8N_PASSWORD';"
-  sudo -u postgres psql -c "ALTER USER n8n WITH PASSWORD '$POSTGRES_N8N_PASSWORD';" >/dev/null
+  if ! sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='n8n'" | grep -q 1; then
+    local pgpass
+    prompt_password "the Postgres 'n8n' role (used by n8n's Postgres credential)" pgpass
+    sudo -u postgres psql -c "CREATE ROLE n8n WITH LOGIN PASSWORD '$pgpass';"
+  fi
 
   sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='watchlist'" | grep -q 1 || \
     sudo -u postgres createdb watchlist
@@ -287,9 +308,14 @@ EOF
   enable_now forgejo
 
   sleep 3
-  sudo -u "$FORGEJO_USER" "$bin" admin user create --config /etc/forgejo/app.ini \
-    --admin --username "$FORGEJO_ADMIN_USER" --password "$FORGEJO_ADMIN_PASSWORD" \
-    --email "$FORGEJO_ADMIN_EMAIL" 2>/dev/null || true
+  if ! sudo -u "$FORGEJO_USER" "$bin" admin user list --config /etc/forgejo/app.ini 2>/dev/null \
+      | awk '{print $2}' | grep -qx "$FORGEJO_ADMIN_USER"; then
+    local fjpass
+    prompt_password "the Forgejo admin user '$FORGEJO_ADMIN_USER'" fjpass
+    sudo -u "$FORGEJO_USER" "$bin" admin user create --config /etc/forgejo/app.ini \
+      --admin --username "$FORGEJO_ADMIN_USER" --password "$fjpass" \
+      --email "$FORGEJO_ADMIN_EMAIL" || true
+  fi
 }
 
 section_ollama() {
@@ -374,7 +400,7 @@ EOF
 }
 
 # --- Runner -----------------------------------------------------------
-ALL_SECTIONS=(base_packages hostname users ssh tailscale firewall docker postgres forgejo ollama n8n uptime_kuma backups)
+ALL_SECTIONS=(base_packages hostname docker users ssh tailscale firewall postgres forgejo ollama n8n uptime_kuma backups)
 
 main() {
   require_root

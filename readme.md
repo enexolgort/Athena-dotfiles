@@ -26,7 +26,7 @@ Each section in `setup.sh` is idempotent:
 - Nothing here does a full od "converge from scratch" diff the way Nix does — it's closer to "run each step's own idempotency check," which is weaker but covers everything actually declared in this script.
 
 ## First boot
-1. **Change the placeholder passwords** in `setup.sh` before this box is actually exposed: `deploy`/`enexolgort`'s default password, Forgejo's admin password, and the `n8n` Postgres role's password. All currently say `changeme*` — search for it, at the top of the file (the "Config" block).
+1. **Passwords are prompted for interactively**, not hardcoded — the first time `setup.sh` creates `deploy`, `enexolgort`, the Postgres `n8n` role, or the Forgejo admin account, it'll stop and ask you to type + confirm a password for that one, then move on. It only asks once per thing (re-running `setup.sh` later won't re-prompt for something that already exists), so don't lose those passwords — nothing else stores them.
 2. **Join your tailnet, matching the machine's hostname:**
    ```bash
    sudo tailscale up --hostname=athena
@@ -76,7 +76,7 @@ sudo ./scripts/restore-backup.sh -y           # skip the confirmation prompt (sc
 Postgres restore drops the `to_watch` table before replaying the dump (the dumps aren't taken with `--clean`, so restoring on top of existing data would otherwise collide on duplicate keys / "relation already exists"). n8n restore just `docker stop`/`start`s the container around the tar extraction (it's a normal persistent container, not `--rm`); Forgejo restore stops/starts the systemd service the same way. tar extraction only adds/overwrites files present in the archive — it doesn't remove files created since that backup was taken.
 
 ## Notes
-- Forgejo's and Postgres's admin/role passwords are plaintext in `setup.sh` — this repo doesn't set up any secrets management, on purpose, to keep things simple. Fine for a single-user tailnet-only box; revisit if that stops being true.
+- Passwords (users, Postgres's `n8n` role, Forgejo's admin) are prompted for interactively at creation time, not stored anywhere in this repo — see "First boot" above. This repo still doesn't set up any secrets management beyond that, on purpose, to keep things simple; fine for a single-user tailnet-only box, revisit if that stops being true.
 - `setup.sh` assumes Debian (apt, systemd, `useradd`/`usermod`) — this was ported straight from a NixOS config, so double-check anything version-specific (Postgres's config path under `/etc/postgresql/<version>/main/`, Docker's official apt repo setup) still matches whatever Debian release you're actually on.
 - Forgejo is installed from a pinned binary release (`FORGEJO_VERSION` at the top of `setup.sh`), not an apt package — Debian doesn't ship one. Bump the version and re-run `sudo ./setup.sh forgejo` to upgrade.
 - Firewall is `ufw`; `trustedInterfaces`-style "trust the whole tailnet" is done via `ufw allow in on tailscale0`, matching what NixOS's `trustedInterfaces` gave every 0.0.0.0-bound service for free.
