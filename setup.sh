@@ -333,6 +333,13 @@ Wants=network-online.target
 [Service]
 User=$FORGEJO_USER
 WorkingDirectory=$FORGEJO_DATA_DIR
+# systemd's WorkingDirectory= and app.ini's APP_DATA_PATH are NOT
+# enough on their own - Forgejo resolves its "work path" from the
+# binary's own directory by default, ignoring both. GITEA_WORK_DIR is
+# the officially documented override (from Forgejo/Gitea's own systemd
+# unit example) that actually takes priority.
+Environment=GITEA_WORK_DIR=$FORGEJO_DATA_DIR
+Environment=HOME=$FORGEJO_DATA_DIR
 ExecStart=$bin web --config /etc/forgejo/app.ini
 Restart=always
 
@@ -341,7 +348,8 @@ WantedBy=multi-user.target
 EOF
   systemctl daemon-reload
   systemctl enable forgejo >/dev/null
-  systemctl restart forgejo  # not enable_now: must restart (not just start) to pick up app.ini changes on re-runs
+  systemctl reset-failed forgejo 2>/dev/null || true  # clear any prior crash-loop rate-limit before restarting
+  systemctl restart forgejo  # not enable_now: must restart (not just start) to pick up app.ini/unit changes on re-runs
 
   sleep 3
   if ! sudo -u "$FORGEJO_USER" "$bin" admin user list --config /etc/forgejo/app.ini 2>/dev/null \
