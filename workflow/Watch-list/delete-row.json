@@ -35,7 +35,7 @@
     {
       "parameters": {
         "respondWith": "redirect",
-        "redirectURL": "http://scrapy-1:5678/webhook/watchlist"
+        "redirectURL": "http://athena:5678/webhook/watchlist"
       },
       "id": "b1a1a1a1-0012-4000-8000-000000000012",
       "name": "Redirect Back",

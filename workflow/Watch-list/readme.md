@@ -2,7 +2,7 @@
 
 Four separate n8n workflows backing the "things to watch/read" feature: a public add-form, a themed view page, a status-change action, and a delete action — the latter two are only ever hit via links on the view page, not visited directly. Backed by the `watchlist` Postgres database and `to_watch` table set up in `configuration.nix`.
 
-Not tracked in git (see repo `.gitignore`) — these are n8n workflow exports, not system config, and each one embeds a `credentials` block referencing a Postgres credential ID that only exists inside this specific n8n instance. Re-export from n8n (or hand-edit these files) if you want a fresh backup; importing an old one still requires re-pointing that credential.
+Note: each file embeds a `credentials` block referencing a Postgres credential ID that only exists inside this specific n8n instance — re-export from n8n (or hand-edit these files) if you want a fresh backup; importing an old one still requires re-pointing that credential.
 
 ## Files
 | File | n8n workflow name | Trigger |
@@ -13,14 +13,14 @@ Not tracked in git (see repo `.gitignore`) — these are n8n workflow exports, n
 | `delete-row.json` | Delete Watchlist Row | Webhook (GET) |
 
 ## Production URLs
-n8n itself is reachable at `http://scrapy-1:5678` over the tailnet — **not** `localhost` (that only resolves correctly if you're running curl directly on the VPS itself; from a laptop browser it resolves to the laptop, not the VPS).
+n8n itself is reachable at `http://athena:5678` over the tailnet — **not** `localhost` (that only resolves correctly if you're running curl directly on the VPS itself; from a laptop browser it resolves to the laptop, not the VPS).
 
 | Purpose | URL |
 |---|---|
-| Add something | `http://scrapy-1:5678/form/watchlist-add` |
-| View the list | `http://scrapy-1:5678/webhook/watchlist` |
-| Change a status (used by the pills on the view page) | `http://scrapy-1:5678/webhook/update-status?id=<id>&status=<status>` |
-| Delete a row (used by the 🗑 link on the view page, browser-confirmed via `confirm()` before navigating) | `http://scrapy-1:5678/webhook/delete?id=<id>` |
+| Add something | `http://athena:5678/form/watchlist-add` |
+| View the list | `http://athena:5678/webhook/watchlist` |
+| Change a status (used by the pills on the view page) | `http://athena:5678/webhook/update-status?id=<id>&status=<status>` |
+| Delete a row (used by the 🗑 link on the view page, browser-confirmed via `confirm()` before navigating) | `http://athena:5678/webhook/delete?id=<id>` |
 
 ## Importing into n8n
 For each file: n8n menu → **Import from File** → select it.

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # check-remote.sh
 # Run from any client device on your tailnet (laptop, phone via Termux)
-# to verify vps's services are actually reachable. Not run on the
+# to verify Athena's services are actually reachable. Not run on the
 # server itself.
 #
 # Usage: ./check-remote.sh [--host <tailscale-ip-or-name>]
@@ -9,7 +9,7 @@
 
 set -uo pipefail
 
-HOST="vps"
+HOST="athena"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --host) HOST="$2"; shift 2 ;;
@@ -39,7 +39,7 @@ check_port() {
   fi
 }
 
-echo "${BOLD}Checking vps ($HOST)${RESET}"
+echo "${BOLD}Checking Athena ($HOST)${RESET}"
 check_port 22 "SSH"
 check_port 3000 "Forgejo / git server"
 check_port 5678 "n8n"

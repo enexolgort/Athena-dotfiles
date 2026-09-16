@@ -1,4 +1,4 @@
-# configuration.nix — vps, a Hostinger VPS.
+# configuration.nix — Athena, a Hostinger VPS.
 # One flat file, nothing hardcoded behind toggles: every service below
 # is one you actually turned on (Obsidian sync, git server, local AI,
 # n8n, Uptime Kuma). Everything reachable is tailnet-only except SSH, which is also
@@ -8,7 +8,7 @@
 
 {
   # --- Identity / locale ------------------------------------------------
-  networking.hostName = "vps";
+  networking.hostName = "Athena";
   time.timeZone = "UTC";
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "us";
@@ -51,6 +51,13 @@
     shell = pkgs.bash;
     initialPassword = "changeme"; # CHANGE on first login
   };
+  users.users.enexolgort = {
+    isNormalUser = true;
+    description = "enexolgort";
+    extraGroups = [ "wheel" ];
+    shell = pkgs.bash;
+    initialPassword = "changeme"; # CHANGE on first login
+  };
 
   system.stateVersion = "24.11"; # do not change after initial install
 
@@ -81,6 +88,7 @@
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = true; # fine — SSH itself is tailnet-only (see above)
+    settings.PermitRootLogin = "no"; # use deploy/enexolgort + sudo instead — no direct root login over SSH
   };
 
   # --- Docker -----------------------------------------------------------
@@ -167,7 +175,7 @@
     settings.server = {
       HTTP_ADDR = "0.0.0.0"; # firewall (trustedInterfaces above) restricts real exposure
       HTTP_PORT = 3000;
-      ROOT_URL = "http://vps:3000/";
+      ROOT_URL = "http://Athena:3000/";
     };
     settings.service.DISABLE_REGISTRATION = true; # single-user server — no public signup
     settings.webhook.ALLOWED_HOST_LIST = "loopback"; # allow webhooks to call 127.0.0.1 — needed since n8n runs on the same host
@@ -179,7 +187,7 @@
   systemd.services.forgejo.preStart = ''
     ${lib.getExe config.services.forgejo.package} admin user create \
       --admin --username enexolgort --password "changeme-git" \
-      --email "enexolgort@vps.local" || true
+      --email "enexolgort@athena.local" || true
   '';
   systemd.services.forgejo.after = [ "network-online.target" ];
   systemd.services.forgejo.wants = [ "network-online.target" ];
