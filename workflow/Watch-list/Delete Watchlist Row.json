@@ -1,0 +1,96 @@
+{
+  "name": "Delete Watchlist Row",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "delete",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "bd6cefec-0e4a-4eac-8a0e-06435a6a23ec",
+      "name": "Delete Row (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b1a1a1a1-0010-4000-8000-000000000010"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM to_watch WHERE id = $1;",
+        "options": {
+          "queryReplacement": "{{ $json.query.id }}"
+        }
+      },
+      "id": "0daf4aa1-fdda-4e6d-be7d-0e7fea617e86",
+      "name": "Delete Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        288,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mGf1Xem6BJdYTp1M",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "http://athena:5678/webhook/watchlist",
+        "options": {}
+      },
+      "id": "eb37a81a-2002-41d6-ab4c-a04f972846c2",
+      "name": "Redirect Back",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        560,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Delete Row (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Delete Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Row": {
+      "main": [
+        [
+          {
+            "node": "Redirect Back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1694cfec-486a-4859-b75a-bde0ad90382c",
+  "meta": {
+    "instanceId": "828b13988a039881c66ad1f64141ff40e9aa264968175f07b8f6e01cf6f4a378"
+  },
+  "nodeGroups": [],
+  "id": "QIemH16o0OUlbI8O",
+  "tags": []
+}

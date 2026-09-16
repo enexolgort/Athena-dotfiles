@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # restore-backup.sh
 # Run ON the VPS itself, as root, to restore the most recent backup
-# produced by the vps-backup systemd service (see configuration.nix and
-# the "Backups" section of readme.md). Destructive: overwrites whatever
-# is currently in the target(s), always prompts for confirmation first.
+# produced by the athena-backup systemd service (see setup.sh's
+# section_backups and the "Backups" section of readme.md). Destructive:
+# overwrites whatever is currently in the target(s), always prompts for
+# confirmation first.
 #
 # Usage: sudo ./restore-backup.sh [postgres|n8n|forgejo|all] [-y|--yes]
 #   (default target: all)
@@ -11,7 +12,7 @@
 
 set -euo pipefail
 
-BACKUP_DIR="/var/backups/vps"
+BACKUP_DIR="/var/backups/athena"
 TARGET="all"
 ASSUME_YES=0
 
@@ -57,9 +58,9 @@ restore_n8n() {
     return
   fi
   echo "Restoring n8n from $file"
-  systemctl stop docker-n8n.service
+  docker stop n8n
   tar xzf "$file" -C /var/lib
-  systemctl start docker-n8n.service
+  docker start n8n
   echo "n8n restore done."
 }
 

@@ -1,0 +1,99 @@
+{
+  "name": "Add to Watchlist",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Add to Watchlist",
+        "formDescription": "Add a book, movie, or show",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Title",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Type",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Book"
+                  },
+                  {
+                    "option": "Movie"
+                  },
+                  {
+                    "option": "TV Show"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Notes"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59bfffc4-f4e2-4841-a357-c53ab9488b3c",
+      "name": "Add to Watchlist (Form)",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b019aefc-c201-40fb-b54c-59b4914b12ab"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO to_watch (title, kind, notes) VALUES ($1, $2, $3);",
+        "options": {
+          "queryReplacement": "={{ $json.Title }},{{ $json.Type.toLowerCase() }},{{ $json.Notes }}"
+        }
+      },
+      "id": "ae7b213e-662d-4a4a-933a-9880df62ea14",
+      "name": "Insert Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        288,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mGf1Xem6BJdYTp1M",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Add to Watchlist (Form)": {
+      "main": [
+        [
+          {
+            "node": "Insert Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f456188f-affc-4599-a2f9-422569186b95",
+  "meta": {
+    "instanceId": "828b13988a039881c66ad1f64141ff40e9aa264968175f07b8f6e01cf6f4a378"
+  },
+  "nodeGroups": [],
+  "id": "tmzH4dOCPNeLANvf",
+  "tags": []
+}

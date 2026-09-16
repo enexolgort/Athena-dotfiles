@@ -1,0 +1,96 @@
+{
+  "name": "Update Watchlist Status",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "update-status",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3ba72262-3edb-4015-875f-8e0331c4ed50",
+      "name": "Update Status (Webhook)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        -16
+      ],
+      "webhookId": "b1a1a1a1-0007-4000-8000-000000000007"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE to_watch SET status = $1 WHERE id = $2;",
+        "options": {
+          "queryReplacement": "={{ $json.query.status }},{{ $json.query.id }}"
+        }
+      },
+      "id": "3db8fcac-83d4-42d3-b816-a93617b7cca5",
+      "name": "Update Row",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        -16
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "mGf1Xem6BJdYTp1M",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "redirect",
+        "redirectURL": "http://athena:5678/webhook/watchlist",
+        "options": {}
+      },
+      "id": "65c12a2e-c5b7-4e21-8aab-249619a48161",
+      "name": "Redirect Back",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        512,
+        -16
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Update Status (Webhook)": {
+      "main": [
+        [
+          {
+            "node": "Update Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Row": {
+      "main": [
+        [
+          {
+            "node": "Redirect Back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "73804ea7-4a2a-46de-b34c-47c16bc24c8a",
+  "meta": {
+    "instanceId": "828b13988a039881c66ad1f64141ff40e9aa264968175f07b8f6e01cf6f4a378"
+  },
+  "nodeGroups": [],
+  "id": "KeFBgmPgF9aMJb61",
+  "tags": []
+}
