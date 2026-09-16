@@ -304,6 +304,8 @@ section_forgejo() {
   # SQLite is a single file, no separate DB service needed - same
   # tradeoff the NixOS Forgejo module made by default.
   cat > /etc/forgejo/app.ini <<EOF
+APP_DATA_PATH = ${FORGEJO_DATA_DIR}/data
+
 [database]
 DB_TYPE = sqlite3
 PATH = ${FORGEJO_DATA_DIR}/data/forgejo.db
